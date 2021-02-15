@@ -14,7 +14,7 @@ using namespace std;
 // window dimensions
 int winWidth, winHeight;
 // OpenGL global variables
-GLuint VAO, VBO, shaderProgramme; 
+GLuint VAO, VBO, EBO, shaderProgramme; 
 GLenum format;
 
 // BMP file header structs
@@ -70,10 +70,15 @@ void createObject();
 
 int main(int argc, char** argv)
 {
-	if (argc != 2)
+	if (argc < 2)
 	{
 		cout << "Please enter a file to read" << endl;
 		return -1;
+	}
+	
+	else if (arg > 2)
+	{
+		cout << "Sadly, I can only read one file at a time" << endl;
 	}
 	
 	bfName = argv[1];
@@ -81,7 +86,7 @@ int main(int argc, char** argv)
 	// initialise GLWF
 	if(!glfwInit())
 	{
-		printf("GLWF Initialisation failed!");
+		cout << "GLWF Initialisation failed!" << endl;
 		glfwTerminate();
 		return -1;
 	}
@@ -106,7 +111,7 @@ int main(int argc, char** argv)
 	
 	if (!mainWindow)
 	{
-		printf("GLFW window did not open, is it painted shut?");
+		cout << "GLFW window did not open, is it painted shut?" << endl;
 		glfwTerminate(); // we'll just leave here and pretend this never happened.
 		return -1;
 	}
@@ -123,7 +128,7 @@ int main(int argc, char** argv)
 	
 	if(glewInit() != GLEW_OK)
 	{
-		printf("GLEW initilisation failed!"); // what has been wrought?
+		cout << "GLEW initilisation failed!" << endl; // what has been wrought?
 		glfwDestroyWindow(mainWindow); // burn it, burn it with fire
 		glfwTerminate();		// and run for the hills!
 		return 1;	
@@ -167,10 +172,12 @@ int main(int argc, char** argv)
 		glUseProgram(shaderProgramme);
 		
 		glBindVertexArray(VAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		
-		glDrawArrays(GL_TRIANGLES, 0, 6); // Starting from vertex 0; 6 vertices total -> 2 triangle
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Starting from vertex 0; 6 vertices total -> 2 triangle
 		
 		glBindVertexArray(0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		
 		glUseProgram(0);
 		
@@ -355,20 +362,26 @@ static void compileShaders()
 
 void createObject()
 {
+	unsigned int indices[] = {
+		0, 1, 2,
+		0, 3, 2
+	};
+
 	
 	GLfloat vertices[] = {
 	//	   x      y     z                s    t    
 		-1.0f, 1.0f, 0.0f,		0.0f, 1.0f,	//	0
 		-1.0f, -1.0f, 0.0f,		0.0f, 0.0f,	//	1
 		1.0f, -1.0f, 0.0f,		1.0f, 0.0f,	//	2
-		-1.0f, 1.0f, 0.0f,		0.0f, 1.0f,	//	3
-		1.0f, 1.0f, 0.0f,		1.0f, 1.0f, 	//	4
-		1.0f, -1.0f, 0.0f,		1.0f, 0.0f	// 	5
-		
+		1.0f, 1.0f, 0.0f,		1.0f, 1.0f, 	//	3
 	};
 	
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
+	
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -379,7 +392,9 @@ void createObject()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (char*)(sizeof(float) * 3));
 	glEnableVertexAttribArray(1); // texture
 	
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
 }
 
